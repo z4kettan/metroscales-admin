@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #0f766e;
+  --color-brand-dark: #115e59;
+  --color-brand-soft: #ccfbf1;
+  --color-ink: #0f172a;
+  --color-muted: #64748b;
+  --color-line: #e2e8f0;
+  --color-canvas: #f8fafc;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-size: 20px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+@utility card { @apply bg-white rounded-xl border border-line shadow-sm; }
+@utility btn { @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed; }
+@utility btn-primary { @apply btn bg-brand text-white hover:bg-brand-dark; }
+@utility btn-ghost { @apply btn text-ink hover:bg-slate-100; }
+@utility btn-outline { @apply btn border border-line bg-white text-ink hover:bg-slate-50; }
+@utility btn-danger { @apply btn text-red-600 hover:bg-red-50; }
+@utility input { @apply w-full rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20; }
+@utility label { @apply block text-xs font-medium text-muted mb-1; }
+@utility table {
+  @apply w-full text-sm;
+  & th:not(.text-right) { @apply text-left; }
+  & th { @apply text-xs font-medium uppercase tracking-wide text-muted px-4 py-3 border-b border-line bg-slate-50; }
+  & td { @apply px-4 py-3 border-b border-line; }
+  & tr:last-child td { @apply border-b-0; }
+}
+@utility badge { @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium; }
+@utility badge-green { @apply badge bg-emerald-50 text-emerald-700; }
+@utility badge-gray { @apply badge bg-slate-100 text-slate-600; }
+@utility badge-red { @apply badge bg-red-50 text-red-700; }
+@utility badge-amber { @apply badge bg-amber-50 text-amber-700; }
+@utility tab { @apply px-3 py-2 text-sm font-medium text-muted border-b-2 border-transparent hover:text-ink; }
+@utility tab-active { @apply text-brand border-brand; }
