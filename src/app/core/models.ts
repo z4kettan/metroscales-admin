@@ -3,7 +3,8 @@ export type Role = 'DEALER_ADMIN' | 'OWNER' | 'STAFF';
 export interface User {
   id: string;
   name: string;
-  email: string;
+  username: string;
+  email?: string | null;
   role: Role;
   isActive?: boolean;
   createdAt?: string;
