@@ -30,7 +30,7 @@ Sign in with the dealer admin from the backend seed: username `admin`, password 
 
 ## Build and host
 
-Set `apiUrl` in `src/environments/environment.prod.ts` to the deployed backend, then:
+Set `apiUrl` in `src/environments/environment.prod.ts` to the deployed backend (now `https://metroscales-backend.vercel.app/api`), then:
 
 ```bash
 npm run build        # output in dist/admin/browser
