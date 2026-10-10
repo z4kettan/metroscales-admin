@@ -15,10 +15,10 @@ Log in with the dealer admin created by the backend seed (`admin@metroscales.loc
 
 ## Build
 
-Set `apiUrl` in `src/environments/environment.prod.ts` to the deployed backend, then:
+`src/environments/environment.prod.ts` points at the deployed backend (https://metroscales-backend.vercel.app/api).
 
 ```bash
 npm run build        # output in dist/admin/browser
 ```
 
-`vercel.json` serves it as a single-page app on Vercel. Add the panel's URL to the backend's `CORS_ORIGIN`.
+Production runs on Vercel (project `metroscales-admin`, https://metroscales-admin.vercel.app). `vercel.json` serves it as a single-page app; deploy with `vercel deploy --prod`. The panel's URL is in the backend's `CORS_ORIGIN`, so add any new domain there too.
