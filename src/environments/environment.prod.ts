@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  // Set to the deployed backend before building for production
-  apiUrl: 'https://metroscales-backend.onrender.com/api',
+  // The backend's Vercel project (metroscales-backend). Change if that project has another URL.
+  apiUrl: 'https://metroscales-backend.vercel.app/api',
 };

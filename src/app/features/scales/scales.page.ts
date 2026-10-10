@@ -1,163 +1,142 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
-import { Customer, CustomerDetail, Scale } from '../../core/models';
+import { ConfirmService } from '../../core/confirm.service';
+import { Scale } from '../../core/models';
 import { formatMac, since } from '../../core/format';
-import { ModalComponent } from '../../shared/modal.component';
+import { PageHeaderComponent } from '../../shared/page-header.component';
+import { FabComponent } from '../../shared/fab.component';
+import { EmptyStateComponent } from '../../shared/empty-state.component';
+import { ScaleDialogComponent } from '../../shared/scale-dialog.component';
 
 @Component({
   selector: 'app-scales',
-  imports: [FormsModule, RouterLink, ModalComponent],
+  imports: [FormsModule, RouterLink, PageHeaderComponent, FabComponent, EmptyStateComponent, ScaleDialogComponent],
   template: `
-    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h1 class="text-xl font-semibold">Scales</h1>
-        <p class="text-sm text-muted">Every scale you have registered, by MAC address</p>
-      </div>
-      <button class="btn-primary" (click)="open()"><span class="material-symbols-outlined">add</span>Register scale</button>
+    <app-page-header title="Scales" subtitle="Every scale you have registered, by MAC address">
+      <button class="btn-filled" (click)="open()"><span class="material-symbols-rounded">add_link</span>Register scale</button>
+    </app-page-header>
+
+    <div class="relative mb-3 max-w-md">
+      <span class="material-symbols-rounded pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+      <input class="search" placeholder="Search name, MAC or customer" [(ngModel)]="search" (ngModelChange)="load()" />
+    </div>
+    <div class="no-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
+      @for (f of filters; track f.value) {
+        <button class="chip" [class.chip-selected]="filter() === f.value" (click)="filter.set(f.value); load()">
+          @if (filter() === f.value) { <span class="material-symbols-rounded !text-lg">check</span> }{{ f.label }}
+        </button>
+      }
     </div>
 
-    <div class="card">
-      <div class="flex flex-wrap gap-3 border-b border-line p-4">
-        <input class="input max-w-xs" placeholder="Search name, MAC or customer" [(ngModel)]="search" (ngModelChange)="load()" />
-        <select class="input max-w-[180px]" [(ngModel)]="status" (ngModelChange)="load()">
-          <option value="">All scales</option>
-          <option value="online">Online</option>
-          <option value="offline">Offline</option>
-          <option value="unassigned">Not assigned</option>
-        </select>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="table">
-          <thead><tr><th>Scale</th><th>MAC address</th><th>Customer / branch</th><th>Status</th><th>Pending</th><th></th></tr></thead>
+    <div class="card overflow-hidden">
+      @if (scales().length) {
+        <div class="py-2 md:hidden">
+          @for (s of scales(); track s.id) {
+            <button class="row-item" (click)="open(s)">
+              <span class="icon-box" [class]="s.online ? '!bg-success-container !text-on-success-container' : '!bg-surface-highest !text-on-surface-variant'">
+                <span class="material-symbols-rounded">scale</span>
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate font-bold">{{ s.name }} <span class="font-semibold text-on-surface-variant">#{{ s.number }}</span></span>
+                <span class="block truncate font-mono text-xs text-on-surface-variant">{{ formatMac(s.mac) }}</span>
+                <span class="block truncate text-xs text-on-surface-variant">{{ s.customer ? s.customer.name + ' · ' + (s.branch?.name ?? '') : 'In stock' }}</span>
+              </span>
+              <span [class]="s.online ? 'pill-success' : s.customer ? 'pill-neutral' : 'pill-info'">{{ s.online ? 'Online' : s.customer ? 'Offline' : 'In stock' }}</span>
+            </button>
+          }
+        </div>
+        <table class="data-table hidden md:table">
+          <thead><tr><th>Scale</th><th>MAC address</th><th>Customer / branch</th><th>Status</th><th class="text-right">Queued</th><th></th></tr></thead>
           <tbody>
             @for (s of scales(); track s.id) {
               <tr>
                 <td>
-                  <div class="font-medium">{{ s.name }} <span class="text-muted">({{ s.number }})</span></div>
-                  <div class="text-xs text-muted">{{ s.model || '' }}</div>
+                  <div class="font-bold">{{ s.name }} <span class="font-semibold text-on-surface-variant">#{{ s.number }}</span></div>
+                  <div class="text-xs text-on-surface-variant">{{ s.model || '' }}</div>
                 </td>
-                <td class="font-mono text-xs">{{ formatMac(s.mac) }}</td>
+                <td class="font-mono text-[13px]">{{ formatMac(s.mac) }}</td>
                 <td>
                   @if (s.customer) {
-                    <a class="text-brand hover:underline" [routerLink]="['/customers', s.customer.id]">{{ s.customer.name }}</a>
-                    <div class="text-xs text-muted">{{ s.branch?.name }}</div>
-                  } @else { <span class="badge-amber">Not assigned</span> }
+                    <a class="font-semibold text-primary hover:underline" [routerLink]="['/customers', s.customer.id]">{{ s.customer.name }}</a>
+                    <div class="text-xs text-on-surface-variant">{{ s.branch?.name }}</div>
+                  } @else { <span class="pill-info">In stock</span> }
                 </td>
                 <td>
-                  <span [class]="s.online ? 'badge-green' : 'badge-gray'">● {{ s.online ? 'Online' : 'Offline' }}</span>
-                  <div class="text-xs text-muted">Seen {{ since(s.lastSeenAt) }}</div>
+                  <span [class]="s.online ? 'pill-success' : 'pill-neutral'">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>{{ s.online ? 'Online' : 'Offline' }}
+                  </span>
+                  <div class="mt-0.5 text-xs text-on-surface-variant">Seen {{ since(s.lastSeenAt) }}</div>
                 </td>
-                <td>{{ s.pendingCommands }}</td>
+                <td class="text-right">{{ s.pendingCommands || '–' }}</td>
                 <td class="whitespace-nowrap text-right">
-                  <button class="btn-ghost" (click)="open(s)" title="Edit"><span class="material-symbols-outlined">edit</span></button>
-                  <button class="btn-danger" (click)="remove(s)" title="Delete"><span class="material-symbols-outlined">delete</span></button>
+                  <button class="icon-btn" (click)="open(s)" title="Edit"><span class="material-symbols-rounded">edit</span></button>
+                  <button class="icon-btn hover:!text-error" (click)="remove(s)" title="Delete"><span class="material-symbols-rounded">delete</span></button>
                 </td>
               </tr>
-            } @empty {
-              <tr><td colspan="6" class="py-10 text-center text-muted">No scales found</td></tr>
             }
           </tbody>
         </table>
-      </div>
+      } @else {
+        <app-empty-state icon="scale" [title]="search || filter() ? 'No scales found' : 'No scales yet'"
+                         [message]="search || filter() ? 'Try another search or filter.' : 'Register a scale with the MAC address from its network settings.'">
+          @if (!search && !filter()) { <button class="btn-filled" (click)="open()"><span class="material-symbols-rounded">add_link</span>Register scale</button> }
+        </app-empty-state>
+      }
     </div>
 
-    @if (editing()) {
-      <app-modal [title]="form.id ? 'Edit scale' : 'Register scale'" (close)="editing.set(false)">
-        <form class="grid grid-cols-2 gap-4" (ngSubmit)="save()">
-          <div class="col-span-2">
-            <label class="label">MAC address *</label>
-            <input class="input font-mono" name="mac" [(ngModel)]="form.mac" placeholder="00:23:F0:1A:97:40" required />
-            <p class="mt-1 text-xs text-muted">Shown in the scale's network settings. Any format works.</p>
-          </div>
-          <div><label class="label">Name *</label><input class="input" name="name" [(ngModel)]="form.name" placeholder="Y201" required /></div>
-          <div><label class="label">Model</label><input class="input" name="model" [(ngModel)]="form.model" placeholder="MRTT-PR/Y202" /></div>
-          <div>
-            <label class="label">Customer</label>
-            <select class="input" name="customer" [(ngModel)]="form.customerId" (ngModelChange)="loadBranches()">
-              <option value="">Not assigned (in stock)</option>
-              @for (c of customers(); track c.id) { <option [value]="c.id">{{ c.name }}</option> }
-            </select>
-          </div>
-          <div>
-            <label class="label">Branch</label>
-            <select class="input" name="branch" [(ngModel)]="form.branchId" [disabled]="!form.customerId">
-              @for (b of branches(); track b.id) { <option [value]="b.id">{{ b.name }}</option> }
-            </select>
-          </div>
-          <div><label class="label">Scale number</label><input class="input" type="number" min="1" name="number" [(ngModel)]="form.number" placeholder="Auto" /></div>
-          <div class="col-span-2 flex justify-end gap-2">
-            <button type="button" class="btn-outline" (click)="editing.set(false)">Cancel</button>
-            <button class="btn-primary">{{ form.id ? 'Save' : 'Register' }}</button>
-          </div>
-        </form>
-      </app-modal>
+    <app-fab icon="add_link" label="Register scale" (pressed)="open()" />
+
+    @if (dialog(); as d) {
+      <app-scale-dialog [scale]="d.scale" [removable]="true" (close)="dialog.set(null)" (saved)="dialog.set(null); load()"
+                        (remove)="dialog.set(null); remove($event)" />
     }
   `,
 })
 export class ScalesPage implements OnInit {
+  /// ?status=offline|online|unassigned from the dashboard
+  status = input<string>();
   private api = inject(ApiService);
   private toast = inject(ToastService);
+  private confirm = inject(ConfirmService);
   scales = signal<Scale[]>([]);
-  customers = signal<Customer[]>([]);
-  branches = signal<{ id: string; name: string }[]>([]);
-  editing = signal(false);
+  dialog = signal<{ scale: Scale | null } | null>(null);
+  filter = signal('');
   search = '';
-  status = '';
-  form = { id: '', mac: '', name: '', model: '', customerId: '', branchId: '', number: null as number | null };
+  filters = [
+    { value: '', label: 'All' },
+    { value: 'online', label: 'Online' },
+    { value: 'offline', label: 'Offline' },
+    { value: 'unassigned', label: 'In stock' },
+  ];
   formatMac = formatMac;
   since = since;
 
   ngOnInit() {
+    this.filter.set(this.status() ?? '');
     this.load();
   }
 
   async load() {
     try {
-      this.scales.set(await this.api.get<Scale[]>('/admin/scales', { search: this.search, status: this.status }));
+      this.scales.set(await this.api.get<Scale[]>('/admin/scales', { search: this.search, status: this.filter() }));
     } catch (e: any) {
       this.toast.error(e.message);
     }
   }
 
-  async open(s?: Scale) {
-    this.form = s
-      ? { id: s.id, mac: formatMac(s.mac), name: s.name, model: s.model ?? '', customerId: s.customerId ?? '', branchId: s.branchId ?? '', number: s.number }
-      : { id: '', mac: '', name: '', model: '', customerId: '', branchId: '', number: null };
-    this.customers.set(await this.api.get<Customer[]>('/admin/customers'));
-    await this.loadBranches(true);
-    this.editing.set(true);
-  }
-
-  async loadBranches(keep = false) {
-    if (!this.form.customerId) {
-      this.branches.set([]);
-      this.form.branchId = '';
-      return;
-    }
-    const c = await this.api.get<CustomerDetail>(`/admin/customers/${this.form.customerId}`);
-    this.branches.set(c.branches);
-    if (!keep || !c.branches.some((b) => b.id === this.form.branchId)) this.form.branchId = c.branches[0]?.id ?? '';
-  }
-
-  async save() {
-    const f = this.form;
-    const body: any = { mac: f.mac, name: f.name, model: f.model || undefined, number: f.number || undefined };
-    try {
-      if (f.id) await this.api.patch(`/admin/scales/${f.id}`, { ...body, branchId: f.branchId || null });
-      else await this.api.post('/admin/scales', { ...body, branchId: f.branchId || undefined });
-      this.editing.set(false);
-      this.toast.success('Scale saved');
-      this.load();
-    } catch (e: any) {
-      this.toast.error(e.message);
-    }
+  open(s?: Scale) {
+    this.dialog.set({ scale: s ?? null });
   }
 
   async remove(s: Scale) {
-    if (!confirm(`Delete scale ${s.name} (${formatMac(s.mac)})? Its sales stay in the reports.`)) return;
+    if (!(await this.confirm.ask({
+      title: `Delete ${s.name}?`,
+      message: `The scale ${formatMac(s.mac)} is removed from the registry. Its past sales stay in the reports.`,
+      confirmLabel: 'Delete', danger: true, icon: 'delete',
+    }))) return;
     try {
       await this.api.delete(`/admin/scales/${s.id}`);
       this.toast.success('Scale deleted');

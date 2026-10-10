@@ -31,16 +31,16 @@ export class AuthService {
     return localStorage.getItem(TOKEN_KEY);
   }
 
-  async login(email: string, password: string) {
+  async login(username: string, password: string) {
     let res: any;
     try {
-      res = await firstValueFrom(this.http.post<any>(`${environment.apiUrl}/auth/login`, { email, secret: password }));
+      res = await firstValueFrom(this.http.post<any>(`${environment.apiUrl}/auth/login`, { username: username.trim(), secret: password }));
     } catch (e) {
       throw new Error(errorMessage(e));
     }
     const { user, accessToken, refreshToken } = res.data;
     if (user.role !== 'DEALER_ADMIN') {
-      throw new Error('This panel is for the dealer. Shop owners should use the mobile app.');
+      throw new Error('This panel is for the dealer. Shop owners and staff sign in to the Metro Scales app.');
     }
     localStorage.setItem(TOKEN_KEY, accessToken);
     localStorage.setItem(REFRESH_KEY, refreshToken);
