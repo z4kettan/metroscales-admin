@@ -21,4 +21,4 @@ Log in with the dealer admin created by the backend seed (`admin@metroscales.loc
 npm run build        # output in dist/admin/browser
 ```
 
-Production runs on Vercel (project `metroscales-admin`, https://metroscales-admin.vercel.app). `vercel.json` serves it as a single-page app; deploy with `vercel deploy --prod`. The panel's URL is in the backend's `CORS_ORIGIN`, so add any new domain there too.
+Production runs on Vercel (project `metroscales-admin`, https://metroscales-admin.vercel.app). `vercel.json` serves it as a single-page app. A push to `main` on GitHub deploys it; `vercel deploy --prod` deploys from a local folder. The panel's URL is in the backend's `CORS_ORIGIN`, so add any new domain there too.
