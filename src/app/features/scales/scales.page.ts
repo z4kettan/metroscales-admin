@@ -29,7 +29,36 @@ import { ModalComponent } from '../../shared/modal.component';
           <option value="unassigned">Not assigned</option>
         </select>
       </div>
-      <div class="overflow-x-auto">
+      <div class="divide-y divide-line md:hidden">
+        @for (s of scales(); track s.id) {
+          <div class="px-4 py-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="font-medium">{{ s.name }} <span class="text-muted">({{ s.number }})</span></div>
+                <div class="font-mono text-xs text-muted">{{ formatMac(s.mac) }}</div>
+                @if (s.model) { <div class="text-xs text-muted">{{ s.model }}</div> }
+              </div>
+              <span class="shrink-0" [class]="s.online ? 'badge-green' : 'badge-gray'">● {{ s.online ? 'Online' : 'Offline' }}</span>
+            </div>
+            <div class="mt-2 flex items-end justify-between gap-3">
+              <div class="min-w-0 text-sm">
+                @if (s.customer) {
+                  <a class="text-brand" [routerLink]="['/customers', s.customer.id]">{{ s.customer.name }}</a>
+                  <div class="text-xs text-muted">{{ s.branch?.name }}</div>
+                } @else { <span class="badge-amber">Not assigned</span> }
+                <div class="mt-1 text-xs text-muted">Seen {{ since(s.lastSeenAt) }} · {{ s.pendingCommands }} pending</div>
+              </div>
+              <div class="flex shrink-0">
+                <button class="btn-ghost" (click)="open(s)" aria-label="Edit"><span class="material-symbols-outlined">edit</span></button>
+                <button class="btn-danger" (click)="remove(s)" aria-label="Delete"><span class="material-symbols-outlined">delete</span></button>
+              </div>
+            </div>
+          </div>
+        } @empty {
+          <p class="py-10 text-center text-sm text-muted">No scales found</p>
+        }
+      </div>
+      <div class="hidden overflow-x-auto md:block">
         <table class="table">
           <thead><tr><th>Scale</th><th>MAC address</th><th>Customer / branch</th><th>Status</th><th>Pending</th><th></th></tr></thead>
           <tbody>

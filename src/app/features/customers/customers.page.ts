@@ -22,7 +22,28 @@ import { ModalComponent } from '../../shared/modal.component';
       <div class="border-b border-line p-4">
         <input class="input max-w-xs" placeholder="Search name, phone or email" [(ngModel)]="search" (ngModelChange)="load()" />
       </div>
-      <div class="overflow-x-auto">
+      <div class="divide-y divide-line md:hidden">
+        @for (c of customers(); track c.id) {
+          <a class="flex items-center justify-between gap-3 px-4 py-3 active:bg-slate-50" [routerLink]="['/customers', c.id]">
+            <div class="min-w-0">
+              <div class="truncate font-medium">{{ c.name }}</div>
+              <div class="truncate text-xs text-muted">{{ c.contactName || 'No contact' }}{{ c.phone ? ' · ' + c.phone : '' }}</div>
+              <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
+                <span>{{ c._count?.branches }} {{ c._count?.branches === 1 ? 'branch' : 'branches' }}</span>
+                <span>{{ c.onlineScaleCount }} / {{ c.scaleCount }} scales online</span>
+                @if (c.subscriptionEndsAt) { <span>Ends {{ c.subscriptionEndsAt.slice(0, 10) }}</span> }
+              </div>
+            </div>
+            <div class="flex shrink-0 items-center gap-1">
+              <span [class]="c.isActive ? 'badge-green' : 'badge-gray'">{{ c.isActive ? 'Active' : 'Disabled' }}</span>
+              <span class="material-symbols-outlined text-muted">chevron_right</span>
+            </div>
+          </a>
+        } @empty {
+          <p class="py-10 text-center text-sm text-muted">{{ loading() ? 'Loading…' : 'No customers yet' }}</p>
+        }
+      </div>
+      <div class="hidden overflow-x-auto md:block">
         <table class="table">
           <thead>
             <tr><th>Customer</th><th>Contact</th><th>Branches</th><th>Scales online</th><th>Subscription</th><th>Status</th></tr>

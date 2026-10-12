@@ -46,7 +46,40 @@ import { StatCardComponent } from '../../shared/stat-card.component';
       <button class="tab" [class.tab-active]="tab() === 'items'" (click)="tab.set('items')">By item</button>
     </div>
 
-    <div class="card overflow-x-auto">
+    <div class="card divide-y divide-line md:hidden">
+      @if (tab() === 'daily') {
+        @for (d of daily(); track d.date) {
+          <button class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left active:bg-slate-50" (click)="openDay(d.date)">
+            <div class="min-w-0">
+              <div class="font-medium">{{ d.date }}</div>
+              <div class="text-xs text-muted">
+                {{ d.bills }} {{ d.bills === 1 ? 'bill' : 'bills' }} · Discount {{ money(d.discount) }} · Tax {{ money(d.tax) }}
+              </div>
+            </div>
+            <div class="flex shrink-0 items-center gap-1">
+              <span class="font-semibold">{{ money(d.total) }}</span>
+              <span class="material-symbols-outlined text-muted">chevron_right</span>
+            </div>
+          </button>
+        } @empty {
+          <p class="py-10 text-center text-sm text-muted">Pick a customer and branch</p>
+        }
+      } @else {
+        @for (i of itemSales(); track i.plu + i.name) {
+          <div class="flex items-center justify-between gap-3 px-4 py-3">
+            <div class="min-w-0">
+              <div class="truncate font-medium">{{ i.name }}</div>
+              <div class="text-xs text-muted">PLU {{ i.plu }} · {{ qty(i.quantity, i.unit) }}</div>
+            </div>
+            <span class="shrink-0 font-semibold">{{ money(i.amount) }}</span>
+          </div>
+        } @empty {
+          <p class="py-10 text-center text-sm text-muted">No sales in this period</p>
+        }
+      }
+    </div>
+
+    <div class="card hidden overflow-x-auto md:block">
       @if (tab() === 'daily') {
         <table class="table">
           <thead><tr><th>Date</th><th class="text-right">Bills</th><th class="text-right">Discount</th><th class="text-right">Tax</th><th class="text-right">Total</th></tr></thead>
@@ -87,22 +120,38 @@ import { StatCardComponent } from '../../shared/stat-card.component';
       <app-modal [title]="'Bills on ' + openDate" [width]="720" (close)="dayBills.set(null)">
         @for (b of bills; track b.id) {
           <div class="mb-3 rounded-lg border border-line">
-            <div class="flex items-center justify-between bg-slate-50 px-4 py-2 text-sm">
+            <div class="flex items-center justify-between gap-3 bg-slate-50 px-4 py-2 text-sm">
               <span class="font-medium">Bill {{ b.billNo }} · {{ time(b.billedAt) }} · {{ b.scale?.name || 'Scale' }}</span>
-              <span class="font-semibold">{{ money(b.total) }}</span>
+              <span class="shrink-0 font-semibold">{{ money(b.total) }}</span>
             </div>
-            <table class="table">
-              <tbody>
-                @for (l of b.lines; track l.id) {
-                  <tr>
-                    <td>{{ l.name }} <span class="text-xs text-muted">PLU {{ l.plu }}</span></td>
-                    <td class="text-right">{{ qty(l.quantity, l.unit) }} × {{ money(l.price) }}</td>
-                    <td class="text-right">{{ money(l.amount) }}</td>
-                  </tr>
-                }
-                @if (b.discount) { <tr><td colspan="2" class="text-right text-muted">Discount</td><td class="text-right">−{{ money(b.discount) }}</td></tr> }
-              </tbody>
-            </table>
+            <div class="divide-y divide-line md:hidden">
+              @for (l of b.lines; track l.id) {
+                <div class="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+                  <div class="min-w-0">
+                    <div class="truncate">{{ l.name }} <span class="text-xs text-muted">PLU {{ l.plu }}</span></div>
+                    <div class="text-xs text-muted">{{ qty(l.quantity, l.unit) }} × {{ money(l.price) }}</div>
+                  </div>
+                  <span class="shrink-0">{{ money(l.amount) }}</span>
+                </div>
+              }
+              @if (b.discount) {
+                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-muted">Discount</span><span>−{{ money(b.discount) }}</span></div>
+              }
+            </div>
+            <div class="hidden md:block">
+              <table class="table">
+                <tbody>
+                  @for (l of b.lines; track l.id) {
+                    <tr>
+                      <td>{{ l.name }} <span class="text-xs text-muted">PLU {{ l.plu }}</span></td>
+                      <td class="text-right">{{ qty(l.quantity, l.unit) }} × {{ money(l.price) }}</td>
+                      <td class="text-right">{{ money(l.amount) }}</td>
+                    </tr>
+                  }
+                  @if (b.discount) { <tr><td colspan="2" class="text-right text-muted">Discount</td><td class="text-right">−{{ money(b.discount) }}</td></tr> }
+                </tbody>
+              </table>
+            </div>
           </div>
         } @empty {
           <p class="text-sm text-muted">No bills on this day.</p>

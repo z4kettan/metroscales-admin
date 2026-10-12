@@ -42,44 +42,75 @@ type Tab = 'branches' | 'users' | 'scales' | 'items';
         </div>
       </div>
 
-      <div class="mb-4 flex gap-2 border-b border-line">
+      <div class="mb-4 flex gap-2 overflow-x-auto border-b border-line">
         @for (t of tabs; track t.key) {
-          <button class="tab" [class.tab-active]="tab() === t.key" (click)="setTab(t.key)">{{ t.label }}</button>
+          <button class="tab shrink-0 whitespace-nowrap" [class.tab-active]="tab() === t.key" (click)="setTab(t.key)">{{ t.label }}</button>
         }
       </div>
 
       @switch (tab()) {
         @case ('branches') {
           <div class="card">
-            <div class="flex items-center justify-between border-b border-line p-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4">
               <span class="text-sm text-muted">Prices and stock are kept per branch</span>
               <button class="btn-primary" (click)="branchForm = { id: '', name: '', address: '', phone: '' }; editingBranch.set(true)">
                 <span class="material-symbols-outlined">add</span>Add branch
               </button>
             </div>
-            <table class="table">
-              <thead><tr><th>Branch</th><th>Address</th><th>Phone</th><th></th></tr></thead>
-              <tbody>
-                @for (b of c.branches; track b.id) {
-                  <tr>
-                    <td class="font-medium">{{ b.name }}</td>
-                    <td class="text-muted">{{ b.address || '—' }}</td>
-                    <td class="text-muted">{{ b.phone || '—' }}</td>
-                    <td class="text-right">
-                      <button class="btn-ghost" (click)="editBranch(b)"><span class="material-symbols-outlined">edit</span></button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+            <div class="divide-y divide-line md:hidden">
+              @for (b of c.branches; track b.id) {
+                <div class="flex items-center justify-between gap-3 px-4 py-3">
+                  <div class="min-w-0">
+                    <div class="font-medium">{{ b.name }}</div>
+                    <div class="text-xs text-muted">{{ b.address || 'No address' }} · {{ b.phone || 'No phone' }}</div>
+                  </div>
+                  <button class="btn-ghost shrink-0" (click)="editBranch(b)" aria-label="Edit branch"><span class="material-symbols-outlined">edit</span></button>
+                </div>
+              }
+            </div>
+            <div class="hidden md:block">
+              <table class="table">
+                <thead><tr><th>Branch</th><th>Address</th><th>Phone</th><th></th></tr></thead>
+                <tbody>
+                  @for (b of c.branches; track b.id) {
+                    <tr>
+                      <td class="font-medium">{{ b.name }}</td>
+                      <td class="text-muted">{{ b.address || '—' }}</td>
+                      <td class="text-muted">{{ b.phone || '—' }}</td>
+                      <td class="text-right">
+                        <button class="btn-ghost" (click)="editBranch(b)"><span class="material-symbols-outlined">edit</span></button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           </div>
         }
         @case ('users') {
           <div class="card">
-            <div class="flex items-center justify-between border-b border-line p-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4">
               <span class="text-sm text-muted">These people log in to the mobile app with email and PIN</span>
               <button class="btn-primary" (click)="openUser()"><span class="material-symbols-outlined">person_add</span>Add user</button>
             </div>
+            <div class="divide-y divide-line md:hidden">
+              @for (u of users(); track u.id) {
+                <div class="flex items-center justify-between gap-3 px-4 py-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="truncate font-medium">{{ u.name }}</span>
+                      <span [class]="u.isActive ? 'badge-green' : 'badge-gray'">{{ u.isActive ? 'Active' : 'Disabled' }}</span>
+                    </div>
+                    <div class="truncate text-xs text-muted">{{ u.email }}</div>
+                    <div class="text-xs text-muted">
+                      {{ u.role === 'OWNER' ? 'Owner' : 'Staff' }}{{ u.role === 'STAFF' && u.branches?.length ? ' · ' + branchNames(u) : '' }}
+                    </div>
+                  </div>
+                  <button class="btn-ghost shrink-0" (click)="openUser(u)" aria-label="Edit user"><span class="material-symbols-outlined">edit</span></button>
+                </div>
+              }
+            </div>
+            <div class="hidden md:block">
             <table class="table">
               <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
               <tbody>
@@ -101,14 +132,30 @@ type Tab = 'branches' | 'users' | 'scales' | 'items';
                 }
               </tbody>
             </table>
+            </div>
           </div>
         }
         @case ('scales') {
           <div class="card">
-            <div class="flex items-center justify-between border-b border-line p-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4">
               <span class="text-sm text-muted">Register new scales on the Scales page</span>
               <a class="btn-outline" routerLink="/scales"><span class="material-symbols-outlined">scale</span>Scales</a>
             </div>
+            <div class="divide-y divide-line md:hidden">
+              @for (s of c.scales; track s.id) {
+                <div class="flex items-start justify-between gap-3 px-4 py-3">
+                  <div class="min-w-0">
+                    <div class="font-medium">{{ s.name }} ({{ s.number }})</div>
+                    <div class="font-mono text-xs text-muted">{{ formatMac(s.mac) }}</div>
+                    <div class="text-xs text-muted">{{ s.branch?.name || 'No branch' }} · Seen {{ since(s.lastSeenAt) }} · {{ s.pendingCommands }} pending</div>
+                  </div>
+                  <span class="shrink-0" [class]="s.online ? 'badge-green' : 'badge-gray'">● {{ s.online ? 'Online' : 'Offline' }}</span>
+                </div>
+              } @empty {
+                <p class="py-8 text-center text-sm text-muted">No scales assigned</p>
+              }
+            </div>
+            <div class="hidden md:block">
             <table class="table">
               <thead><tr><th>Scale</th><th>MAC</th><th>Branch</th><th>Status</th><th>Pending</th></tr></thead>
               <tbody>
@@ -128,6 +175,7 @@ type Tab = 'branches' | 'users' | 'scales' | 'items';
                 }
               </tbody>
             </table>
+            </div>
           </div>
         }
         @case ('items') {
@@ -139,7 +187,27 @@ type Tab = 'branches' | 'users' | 'scales' | 'items';
               <input class="input max-w-xs" placeholder="Search name or PLU" [(ngModel)]="itemSearch" (ngModelChange)="loadItems()" />
               <span class="text-sm text-muted">{{ items().length }} items · shop owners edit these in the app</span>
             </div>
-            <div class="overflow-x-auto">
+            <div class="divide-y divide-line md:hidden">
+              @for (i of items(); track i.id) {
+                <div class="flex items-center justify-between gap-3 px-4 py-3">
+                  <div class="min-w-0">
+                    <div class="truncate font-medium">{{ i.name }}</div>
+                    <div class="text-xs text-muted">
+                      PLU {{ i.plu }} · {{ i.category?.name || 'No category' }} · GST {{ i.gstPercent }}% {{ i.gstMode === 'INCLUDED' ? 'incl.' : 'extra' }}
+                    </div>
+                  </div>
+                  <div class="shrink-0 text-right">
+                    <div class="font-medium">{{ money(i.price) }} / {{ i.unit === 'KG' ? 'kg' : 'pack' }}</div>
+                    <div class="text-xs" [class.text-red-600]="(i.stock ?? 0) < 0" [class.text-muted]="(i.stock ?? 0) >= 0">
+                      Stock {{ qty(i.stock, i.unit) }}
+                    </div>
+                  </div>
+                </div>
+              } @empty {
+                <p class="py-8 text-center text-sm text-muted">No items</p>
+              }
+            </div>
+            <div class="hidden overflow-x-auto md:block">
               <table class="table">
                 <thead><tr><th>PLU</th><th>Item</th><th>Category</th><th class="text-right">Price</th><th class="text-right">Stock</th><th>GST</th></tr></thead>
                 <tbody>
