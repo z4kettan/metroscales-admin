@@ -4,7 +4,8 @@ import { ToastService } from '../core/toast.service';
 @Component({
   selector: 'app-toasts',
   template: `
-    <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+    <!-- Above the bottom navigation bar on phones -->
+    <div class="fixed inset-x-4 bottom-24 z-50 flex flex-col items-center gap-2 sm:inset-x-auto sm:right-4 sm:items-end lg:bottom-4">
       @for (t of toasts.toasts(); track t.id) {
         <div class="card flex items-center gap-2 px-4 py-3 text-sm shadow-lg"
              [class.border-emerald-200]="t.kind === 'success'" [class.border-red-200]="t.kind === 'error'">

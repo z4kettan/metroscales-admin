@@ -26,6 +26,10 @@ html, body {
   vertical-align: middle;
 }
 
+.material-symbols-outlined.icon-filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
 @utility card { @apply bg-white rounded-xl border border-line shadow-sm; }
 @utility btn { @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed; }
 @utility btn-primary { @apply btn bg-brand text-white hover:bg-brand-dark; }
